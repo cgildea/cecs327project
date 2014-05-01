@@ -17,7 +17,7 @@ import java.util.Scanner;
  *
  * @author Cody
  */
-public class clientThread {
+public class clientThread implements Runnable {
 
     private String clientName = null;
     private DataInputStream is = null;
