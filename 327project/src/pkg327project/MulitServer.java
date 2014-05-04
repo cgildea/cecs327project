@@ -54,10 +54,10 @@ public class MulitServer {
 
                    Socket socket = server1.accept();
                    new ConnectionHandler(socket);
-   //
-   //                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-   //                String input = (String) ois.readObject();
-   //                System.out.println(input+"##################");
+   //           THE BOTTOM WON'T WORK.
+//                   ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+//                   String input = (String) ois.readObject();
+//                   System.out.println(input+"##################");
                 }
 
             } catch (IOException e) {
