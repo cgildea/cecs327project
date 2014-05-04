@@ -15,23 +15,27 @@ import java.util.logging.Logger;
 
 public class MulitServer {
 
-    private ServerSocket server;
-    private int port = 7777;
+    private ServerSocket server1;
+//    private ServerSocket server2;
+
+    private int port1 = 7777;
+//    private int port2 = 4444;
 
     public MulitServer() {
         try {
-            server = new ServerSocket(port);
+            server1 = new ServerSocket(port1);
+//            server2 = new ServerSocket(port2);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args){
         MulitServer example = new MulitServer();
         example.handleConnection();
     }
 
-    public void handleConnection() {
+    public void handleConnection(){
         System.out.println("Waiting for client message...");
 
         //
@@ -40,8 +44,26 @@ public class MulitServer {
         //
         while (true) {
             try {
-                Socket socket = server.accept();
-                new ConnectionHandler(socket);
+                Socket socket1 = server1.accept();
+//                Socket socket2 = server2.accept();
+//                System.out.println(socket1.isConnected()+"SOCKET ONE");
+//                System.out.println(socket2.isConnected()+"SOCKET TWO");
+//
+//                System.out.println(socket1.getLocalPort()+"SOCKET ONE");
+//
+//                System.out.println(socket2.getLocalPort()+"SOCKET TWO");
+
+//                if (socket1.isConnected()) {
+                    new ConnectionHandler(socket1);
+//
+//                } else if (socket2.isConnected()) {
+//                    System.out.println("POOP");
+//                    new ConnectionHandler(socket2);
+//
+//                } else {
+//                    System.out.println("Unknown port.  Connection aborted");
+//                }
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
