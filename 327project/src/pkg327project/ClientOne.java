@@ -40,9 +40,14 @@ public class ClientOne {
                 //
                 // Create a connection to the server socket on the server application
                 //
-                InetAddress host = InetAddress.getLocalHost();
-                Socket socket = new Socket(host.getHostName(), 7777);
+                
+                /*THIS DOESN'T WORK FOR SOME REASON!!!*/
+////                InetAddress host = InetAddress.getLocalHost();
+//                Socket socket = new Socket("75.142.123.113", 7777);
 
+                InetAddress host = InetAddress.getLocalHost();
+                Socket socket = new Socket(host, 7777);
+                
                 //
                 // Send a message to the client application
                 //

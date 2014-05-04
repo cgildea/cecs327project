@@ -15,39 +15,106 @@ import java.util.logging.Logger;
 
 public class MulitServer {
 
-    private ServerSocket server;
-    private int port = 7777;
+    private ServerSocket server1;
+    private ServerSocket server2;
+    private int port1 = 7777;
+    private int port2 = 4444;
 
     public MulitServer() {
         try {
-            server = new ServerSocket(port);
+            server1 = new ServerSocket(port1);
+            server2 = new ServerSocket(port2);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ClassNotFoundException {
         MulitServer example = new MulitServer();
         example.handleConnection();
     }
 
-    public void handleConnection() {
+    public void handleConnection() throws ClassNotFoundException {
         System.out.println("Waiting for client message...");
 
         //
         // The server do a loop here to accept all connection initiated by the
         // client application.
         //
+        
+        
+        
         while (true) {
             try {
-                Socket socket = server.accept();
-                new ConnectionHandler(socket);
+   //                Socket socket = server.accept();
+   //
+   //                new TestConnection(socket);
+                if(port1 == 7777) {
+                   System.out.println("Port is 7777");
+
+                   Socket socket = server1.accept();
+                   new ConnectionHandler(socket);
+   //
+   //                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+   //                String input = (String) ois.readObject();
+   //                System.out.println(input+"##################");
+                }
+
             } catch (IOException e) {
                 e.printStackTrace();
-            }
+            }   
+
+            try {
+                if (port2 == 4444) {
+                    System.out.println("Port is NOT 7777");
+
+                    Socket socket = server2.accept();                
+    //                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+    //                String input = (String) ois.readObject();
+    //                System.out.println(input+"##################");
+                    new ConnectionHandler(socket);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }            
         }
     }
+
+
+    public static class TestConnection implements Runnable {
+        Socket socket;
+        ReentrantLock lock = new ReentrantLock();
+        
+        public TestConnection(Socket socket) {
+            this.socket = socket;
+            
+            Thread t = new Thread(this);
+            t.start();
+        }
+        
+        @Override
+        public void run() {
+            lock.lock();
+            try(ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
+//                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+                String input = (String) ois.readObject();
+                System.out.println(input+"##################");
+//                ConnectionHandler connectionHandler = new ConnectionHandler(socket);
+//                connectionHandler.startHandler();
+
+                ois.close();
+                socket.close();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                lock.unlock();
+            }            
+        }
+    }
+
+
 }
+
 
 class ConnectionHandler implements Runnable {
 
@@ -197,73 +264,3 @@ class ConnectionHandler implements Runnable {
 
     }
 }
-
-//import java.io.IOException;
-//import java.io.PrintStream;
-//import java.net.ServerSocket;
-//import java.net.Socket;
-//
-///**
-// *
-// * @author Cody Gildea <cbgildea@gmail.com>
-// */
-//public class MulitServer {
-//
-//    // The server socket.
-//    private static ServerSocket serverSocket = null;
-//    // The client socket.
-//    private static Socket clientSocket = null;
-//
-//    // This chat server can accept up to maxClientsCount clients' connections.
-//    private static final int maxClientsCount = 10;
-//    private static final clientThread[] threads = new clientThread[maxClientsCount];
-//
-//    public static void main(String args[]) {
-//
-//        // The default port number.
-//        int portNumber = 2222;
-//        if (args.length < 1) {
-//            System.out.println("Usage: java MultiThreadChatServerSync <portNumber>\n"
-//                    + "Now using port number=" + portNumber);
-//        } else {
-//            portNumber = Integer.valueOf(args[0]).intValue();
-//        }
-//
-//        /*
-//         * Open a server socket on the portNumber (default 2222). Note that we can
-//         * not choose a port less than 1023 if we are not privileged users (root).
-//         */
-//        try {
-//            serverSocket = new ServerSocket(portNumber);
-//        } catch (IOException e) {
-//            System.out.println(e);
-//        }
-//
-//        /*
-//         * Create a client socket for each connection and pass it to a new client
-//         * thread.
-//         */
-//        while (true) {
-//            try {
-//                clientSocket = serverSocket.accept();
-//                int i = 0;
-//                for (i = 0; i < maxClientsCount; i++) {
-//                    if (threads[i] == null) {
-//                        (threads[i] = new clientThread(clientSocket, threads)).run();
-//                        break;
-//                    }
-//                }
-//                if (i == maxClientsCount) {
-//                    PrintStream os = new PrintStream(clientSocket.getOutputStream());
-//                    os.println("Server too busy. Try later.");
-//                    os.close();
-//                    clientSocket.close();
-//                }
-//            } catch (IOException e) {
-//                System.out.println(e);
-//            }
-//        }
-//    }
-//
-//}
-

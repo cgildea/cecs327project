@@ -42,7 +42,7 @@ public class ClientTwo {
                 // Create a connection to the server socket on the server application
                 //
                 InetAddress host = InetAddress.getLocalHost();
-                Socket socket = new Socket(host.getHostName(), 7777);
+                Socket socket = new Socket(host.getHostName(), 4444);
 
                 //
                 // Send a message to the client application
