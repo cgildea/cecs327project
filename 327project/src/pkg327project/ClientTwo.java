@@ -42,7 +42,7 @@ public class ClientTwo {
                 // Create a connection to the server socket on the server application
                 //
                 InetAddress host = InetAddress.getLocalHost();
-                Socket socket = new Socket(host.getHostName(), 4444);
+                Socket socket = new Socket(host.getHostName(), 7777);
 
                 //
                 // Send a message to the client application
@@ -52,7 +52,6 @@ public class ClientTwo {
                     word += allowedChars.charAt(random.nextInt(allowedChars.length()));
                 }
                 word += " CLIENTTWO";
-                System.out.println("OUT OF FOR LOOP WORD: " + word);
 
                 // The server will get our word, look for it in the LL, then replies
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());

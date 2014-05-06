@@ -75,21 +75,30 @@ class ConnectionHandler implements Runnable {
 
                 String message = (String) ois.readObject();
                 System.out.println("Message Received: " + message);
-                //message = SpellCheck(message);
-//                SpellCheck spell = new SpellCheck(message);
-//                System.out.println("\nMessage Spell Checked: " + spell.getMessage());
+                String[] splited = message.split("\\s+");
 
-                SpellCheck spellThread = new SpellCheck(message);
-                spellThread.run();
+                if (splited[1].equalsIgnoreCase("CLIENTONE")) {
+                    SpellCheck spellThread = new SpellCheck(splited[0]);
+                    spellThread.run();
 
-                System.out.println("\nMessage Spell Checked: " + spellThread.getMessage());
-                if (spellThread.getMessage() != "0") {
-                    System.out.println("Message was null after if check");
-                    AddToLinkedList addToList = new AddToLinkedList(message, serverList);
-                    addToList.run();
-                    System.out.println(addToList.getLinkedList());
+//                    System.out.println("\nMessage Spell Checked: " + spellThread.getMessage());
+                    if (!"0".equals(spellThread.getMessage())) {
+                        System.out.println("Message was null after if check");
+                        AddToLinkedList addToList = new AddToLinkedList(splited[0], serverList);
+                        addToList.run();
+                        serverList = addToList.getLinkedList();
+ //                       System.out.println(addToList.getLinkedList());
+                        
+                    }
+                } else if (splited[1].equalsIgnoreCase("CLIENTTWO")) {
+                    System.out.println("CLIENT TWO IF");
+                } else {
+                    System.out.println("CONNECTION HANDLER ERROR");
                 }
+                printList(serverList);
 
+//                SpellCheck spellThread = new SpellCheck(message);
+//                spellThread.run();
                 oos = new ObjectOutputStream(socket.getOutputStream());
                 oos.writeObject("Hi...");
             }
@@ -154,6 +163,7 @@ class ConnectionHandler implements Runnable {
 
         String str;
         private LinkedList<String> linkedList;
+        boolean added;
 
         public AddToLinkedList(String str, LinkedList<String> linkedList) {
             this.str = str;
@@ -171,15 +181,14 @@ class ConnectionHandler implements Runnable {
                 for (int k = 0; k < getLinkedList().size(); k++) {
                     if (str.compareTo(getLinkedList().get(k)) <= 0) {
                         getLinkedList().add(k, str);
-//                            added = true;
+                        added = true;
                         break;
                     }
                 }
-//                    if(!added)
-//                    {
-//                        linkedList.add(str);
-//                    }
-//                    added = false;
+                if (!added) {
+                    linkedList.add(str);
+                }
+                added = false;
             }
             setLinkedList(linkedList);
         }
@@ -199,74 +208,11 @@ class ConnectionHandler implements Runnable {
         }
 
     }
+
+    public static void printList(LinkedList<String> list) {
+        System.out.println("LIST:");
+        for (int i = 0; i < list.size(); i++) {
+            System.out.println(list.get(i));
+        }
+    }
 }
-
-//import java.io.IOException;
-//import java.io.PrintStream;
-//import java.net.ServerSocket;
-//import java.net.Socket;
-//
-///**
-// *
-// * @author Cody Gildea <cbgildea@gmail.com>
-// */
-//public class MulitServer {
-//
-//    // The server socket.
-//    private static ServerSocket serverSocket = null;
-//    // The client socket.
-//    private static Socket clientSocket = null;
-//
-//    // This chat server can accept up to maxClientsCount clients' connections.
-//    private static final int maxClientsCount = 10;
-//    private static final clientThread[] threads = new clientThread[maxClientsCount];
-//
-//    public static void main(String args[]) {
-//
-//        // The default port number.
-//        int portNumber = 2222;
-//        if (args.length < 1) {
-//            System.out.println("Usage: java MultiThreadChatServerSync <portNumber>\n"
-//                    + "Now using port number=" + portNumber);
-//        } else {
-//            portNumber = Integer.valueOf(args[0]).intValue();
-//        }
-//
-//        /*
-//         * Open a server socket on the portNumber (default 2222). Note that we can
-//         * not choose a port less than 1023 if we are not privileged users (root).
-//         */
-//        try {
-//            serverSocket = new ServerSocket(portNumber);
-//        } catch (IOException e) {
-//            System.out.println(e);
-//        }
-//
-//        /*
-//         * Create a client socket for each connection and pass it to a new client
-//         * thread.
-//         */
-//        while (true) {
-//            try {
-//                clientSocket = serverSocket.accept();
-//                int i = 0;
-//                for (i = 0; i < maxClientsCount; i++) {
-//                    if (threads[i] == null) {
-//                        (threads[i] = new clientThread(clientSocket, threads)).run();
-//                        break;
-//                    }
-//                }
-//                if (i == maxClientsCount) {
-//                    PrintStream os = new PrintStream(clientSocket.getOutputStream());
-//                    os.println("Server too busy. Try later.");
-//                    os.close();
-//                    clientSocket.close();
-//                }
-//            } catch (IOException e) {
-//                System.out.println(e);
-//            }
-//        }
-//    }
-//
-//}
-
