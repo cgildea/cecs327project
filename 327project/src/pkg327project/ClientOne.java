@@ -16,7 +16,7 @@ import java.security.SecureRandom;
 public class ClientOne {
 
     public static void main(String[] args) {
-        ClientOneRun threads[] = new ClientOneRun[20];
+        ClientOneRun threads[] = new ClientOneRun[50];
         for (int i = 0; i < threads.length; i++) {
             threads[i] = new ClientOneRun();
             threads[i].run();

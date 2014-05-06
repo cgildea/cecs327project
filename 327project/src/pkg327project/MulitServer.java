@@ -76,35 +76,29 @@ class ConnectionHandler implements Runnable {
 
                 String message = (String) ois.readObject();
                 System.out.println("Message Received: " + message);
-                String[] splited = message.split("\\s+");
+                String[] splitted = message.split("\\s+");
 
-                if (splited[1].equalsIgnoreCase("CLIENTONE")) {
-                    SpellCheck spellThread = new SpellCheck(splited[0]);
+                if (splitted[1].equalsIgnoreCase("CLIENTONE")) {
+                    SpellCheck spellThread = new SpellCheck(splitted[0]);
                     spellThread.run();
 
-//                    System.out.println("\nMessage Spell Checked: " + spellThread.getMessage());
-                    if (!"0".equals(spellThread.getMessage())) {
-                        System.out.println("Message was null after if check");
-                        AddToLinkedList addToList = new AddToLinkedList(splited[0], serverList);
+                    if((spellThread.getMessage().equals("Correct") || spellThread.getMessage().equals("Misspelled"))) {
+                        AddToLinkedList addToList = new AddToLinkedList(spellThread.getWord());
                         addToList.run();
-                        serverList = addToList.getLinkedList();
- //                       System.out.println(addToList.getLinkedList());
-                        
                     }
-                } else if (splited[1].equalsIgnoreCase("CLIENTTWO")) {
+                    oos = new ObjectOutputStream(socket.getOutputStream());
+                    oos.writeObject(splitted[0] + " Received " + spellThread.getMessage());
+                    
+                    oos.close();
+                    socket.close();
+
+                } else if (splitted[1].equalsIgnoreCase("CLIENTTWO")) {
                     System.out.println("CLIENT TWO IF");
                 } else {
                     System.out.println("CONNECTION HANDLER ERROR");
                 }
                 printList(serverList);
-
-//                SpellCheck spellThread = new SpellCheck(message);
-//                spellThread.run();
-                oos = new ObjectOutputStream(socket.getOutputStream());
-                oos.writeObject("Hi...");
             }
-            oos.close();
-            socket.close();
 
             System.out.println("Waiting for client message...");
         } catch (IOException | ClassNotFoundException e) {
@@ -124,27 +118,48 @@ class ConnectionHandler implements Runnable {
 
     public static class SpellCheck implements Runnable {
 
+        private String word;
         private String message;
 
-        public SpellCheck(String message) {
-            this.message = message;
+        public SpellCheck(String word) {
+            this.word = word;
             Thread t = new Thread();
             t.start();
         }
-
-        public static String spellCheck(String w) {
-            if (!w.contains("!") && !w.contains(")") && !w.contains("&") && !w.contains("@") && !w.contains("%")) {
-                return w.toUpperCase();
+        
+        @Override
+        public void run() {
+            if (!word.contains("!") && !word.contains(")") && !word.contains("&") && !word.contains("@") && !word.contains("%")) {
+                System.out.println(getWord().toUpperCase()); // NO. 
+                if(getWord().equals(getWord().toUpperCase())) // 
+                    setMessage("Correct");
+                else
+                    setMessage("Misspelled");
+                setWord(word.toUpperCase());
             } else {
-                return null;
+                setMessage("Invalid");
             }
+        }
+
+        /**
+         * @return the word
+         */
+        public String getWord() {
+            return word;
+        }
+
+        /**
+         * @param word the word to set
+         */
+        public void setWord(String word) {
+            this.word = word;
         }
 
         /**
          * @return the message
          */
         public String getMessage() {
-            return spellCheck(message);
+            return message;
         }
 
         /**
@@ -153,57 +168,10 @@ class ConnectionHandler implements Runnable {
         public void setMessage(String message) {
             this.message = message;
         }
-
-        @Override
-        public void run() {
-            if (!message.contains("!") && !message.contains(")") && !message.contains("&") && !message.contains("@") && !message.contains("%")) {
-                System.out.println(message.toUpperCase());
-                setMessage(message);
-            } else {
-                System.out.println("Nada");
-                setMessage("0");
-            }
-
-        }
-
     }
 
     public static class AddToLinkedList {
         String str;
-/*
-        boolean addedString = false;
-
-        public AddToLinkedList(String str) {
-            this.str = str;
-
-            Thread t = new Thread();
-            t.start();
-        }
-
-        public void run() {
-            if (serverList.isEmpty())
-                serverList.add(str);
-            else {
-                Iterator<String> listIterator = serverList.iterator();
-                while (listIterator.hasNext()) {
-                    String x = listIterator.next();
-                    if (str.compareTo(x) <= 0) {
-                        serverList.add(str);
-                        addedString = true;
-                        break;
-                    } // end compareTo 'if' 
-                    if (!addedString) {
-                        serverList.add(str);
-                    } // end !addedString 'if'
-                    addedString = false;
-                } // end while
-//            serverList.add(str); // Adds it to the end of the linked list
-            }
-        }        
-        
-        */
-
-        private LinkedList<String> linkedList;
         boolean added;
 
         public AddToLinkedList(String str) {
@@ -213,34 +181,7 @@ class ConnectionHandler implements Runnable {
             t.start();
         }
         
-       public AddToLinkedList(String str, LinkedList<String> linkedList) {
-            this.str = str;
-            this.linkedList = linkedList;
-
-            Thread t = new Thread();
-            t.start();
-        }        
-
         public void run() {
-            // Patrick's run
-//            if (serverList.isEmpty())
-//                serverList.add(str);
-//            else {
-//                Iterator<String> listIterator = serverList.iterator();
-//                while (listIterator.hasNext()) {
-//                    String x = listIterator.next();
-//                    if (str.compareTo(x) <= 0) {
-//                        serverList.add(str);
-//                        addedString = true;
-//                        break;
-//                    } // end compareTo 'if' 
-//                    if (!addedString) {
-//                        serverList.add(str);
-//                    } // end !addedString 'if'
-//                    addedString = false;
-//                } // end while
-//            serverList.add(str); // Adds it to the end of the linked list
-
             if (getLinkedList().isEmpty()) {
                 getLinkedList().add(str);
             } else {
@@ -252,7 +193,7 @@ class ConnectionHandler implements Runnable {
                     }
                 }
                 if (!added) {
-                    linkedList.add(str);
+                    getLinkedList().add(str);
                 }
                 added = false;
             }
@@ -262,16 +203,8 @@ class ConnectionHandler implements Runnable {
          * @return the linkedList
          */
         public LinkedList<String> getLinkedList() {
-//            return linkedList;
             return serverList;
         }
-
-        /**
-         * @param linkedList the linkedList to set ---- we don't really need this...
-         */
-//        public void setLinkedList(LinkedList<String> linkedList) {
-//            this.linkedList = linkedList;
-//        }
     }
     
     public static void printList(LinkedList<String> list) {
