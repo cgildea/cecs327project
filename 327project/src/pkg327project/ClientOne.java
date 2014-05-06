@@ -50,6 +50,7 @@ public class ClientOne {
                 for (int j = 0; j < wordLength; j++) {
                     word += allowedChars.charAt(random.nextInt(allowedChars.length()));
                 }
+                word += " CLIENTONE";
                 System.out.println("OUT OF FOR LOOP WORD: " + word);
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
                 oos.writeObject(word);

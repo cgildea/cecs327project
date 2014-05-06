@@ -51,6 +51,7 @@ public class ClientTwo {
                 for (int j = 0; j < wordLength; j++) {
                     word += allowedChars.charAt(random.nextInt(allowedChars.length()));
                 }
+                word += " CLIENTTWO";
                 System.out.println("OUT OF FOR LOOP WORD: " + word);
 
                 // The server will get our word, look for it in the LL, then replies
