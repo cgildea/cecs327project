@@ -54,10 +54,6 @@ public class MulitServer {
 
                    Socket socket = server1.accept();
                    new ConnectionHandler(socket);
-   //           THE BOTTOM WON'T WORK.
-//                   ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-//                   String input = (String) ois.readObject();
-//                   System.out.println(input+"##################");
                 }
 
             } catch (IOException e) {
@@ -66,55 +62,51 @@ public class MulitServer {
 
             try {
                 if (port2 == 4444) {
-                    System.out.println("Port is NOT 7777");
+                    System.out.println("Port is 4444");
 
-                    Socket socket = server2.accept();                
+                    Socket socket = server2.accept();
     //                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
     //                String input = (String) ois.readObject();
     //                System.out.println(input+"##################");
-                    new ConnectionHandler(socket);
+                    new TestConnection(socket);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }            
         }
     }
+}
 
+class TestConnection implements Runnable {
+    Socket socket;
+    ReentrantLock lock = new ReentrantLock();
 
-    public static class TestConnection implements Runnable {
-        Socket socket;
-        ReentrantLock lock = new ReentrantLock();
-        
-        public TestConnection(Socket socket) {
-            this.socket = socket;
-            
-            Thread t = new Thread(this);
-            t.start();
-        }
-        
-        @Override
-        public void run() {
-            lock.lock();
-            try(ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
+    public TestConnection(Socket socket) {
+        this.socket = socket;
+
+        Thread t = new Thread(this);
+        t.start();
+    }
+
+    @Override
+    public void run() {
+        lock.lock();
+        try(ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
 //                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-                String input = (String) ois.readObject();
-                System.out.println(input+"##################");
+            String input = (String) ois.readObject();
+            System.out.println(input+"##################");
 //                ConnectionHandler connectionHandler = new ConnectionHandler(socket);
 //                connectionHandler.startHandler();
 
-                ois.close();
-                socket.close();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            } finally {
-                lock.unlock();
-            }            
-        }
+            ois.close();
+            socket.close();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }            
     }
-
-
 }
-
 
 class ConnectionHandler implements Runnable {
 
