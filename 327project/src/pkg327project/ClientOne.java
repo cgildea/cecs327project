@@ -16,7 +16,7 @@ import java.security.SecureRandom;
 public class ClientOne {
 
     public static void main(String[] args) {
-        ClientOneRun threads[] = new ClientOneRun[10];
+        ClientOneRun threads[] = new ClientOneRun[20];
         for (int i = 0; i < threads.length; i++) {
             threads[i] = new ClientOneRun();
             threads[i].run();
@@ -50,7 +50,7 @@ public class ClientOne {
                 for (int j = 0; j < wordLength; j++) {
                     word += allowedChars.charAt(random.nextInt(allowedChars.length()));
                 }
-                word += " CLIENTONE";
+//                word += " CLIENTONE";
                 System.out.println("OUT OF FOR LOOP WORD: " + word);
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
                 oos.writeObject(word);

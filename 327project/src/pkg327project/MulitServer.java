@@ -8,10 +8,12 @@ import java.lang.Runnable;
 import java.lang.Thread;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static pkg327project.ConnectionHandler.serverList;
 
 public class MulitServer {
 
@@ -53,10 +55,9 @@ public class MulitServer {
 }
 
 class ConnectionHandler implements Runnable {
-
     private Socket socket;
     ReentrantLock lock = new ReentrantLock();
-    LinkedList<String> serverList = new LinkedList<String>();
+    static LinkedList<String> serverList = new LinkedList<String>(); // Introduce the static LinkedList
 
     public ConnectionHandler(Socket socket) {
         this.socket = socket;
@@ -84,10 +85,8 @@ class ConnectionHandler implements Runnable {
 
                 System.out.println("\nMessage Spell Checked: " + spellThread.getMessage());
                 if (spellThread.getMessage() != "0") {
-                    System.out.println("Message was null after if check");
-                    AddToLinkedList addToList = new AddToLinkedList(message, serverList);
+                    AddToLinkedList addToList = new AddToLinkedList(message); // ADDS IT TO THE LINKED LIST
                     addToList.run();
-                    System.out.println(addToList.getLinkedList());
                 }
 
                 oos = new ObjectOutputStream(socket.getOutputStream());
@@ -101,6 +100,14 @@ class ConnectionHandler implements Runnable {
             e.printStackTrace();
         } finally {
             lock.unlock();
+
+            // Technically we don't need this here.......... =]
+            Iterator<String> listIterator = serverList.iterator();
+            while(listIterator.hasNext()) {
+                String x = listIterator.next();
+                System.out.println(x + ", ");
+            }
+            
         }
     }
 
@@ -151,122 +158,58 @@ class ConnectionHandler implements Runnable {
     }
 
     public static class AddToLinkedList {
-
         String str;
-        private LinkedList<String> linkedList;
+        boolean addedString = false;
 
-        public AddToLinkedList(String str, LinkedList<String> linkedList) {
+        public AddToLinkedList(String str) {
             this.str = str;
-            this.linkedList = linkedList;
 
             Thread t = new Thread();
             t.start();
         }
 
         public void run() {
-
-            if (getLinkedList().isEmpty()) {
-                getLinkedList().add(str);
-            } else {
-                for (int k = 0; k < getLinkedList().size(); k++) {
-                    if (str.compareTo(getLinkedList().get(k)) <= 0) {
-                        getLinkedList().add(k, str);
-//                            added = true;
+            if (serverList.isEmpty())
+                serverList.add(str);
+            else {
+                Iterator<String> listIterator = serverList.iterator();
+                while (listIterator.hasNext()) {
+                    String x = listIterator.next();
+                    if (str.compareTo(x) <= 0) {
+                        serverList.add(str);
+                        addedString = true;
                         break;
-                    }
-                }
-//                    if(!added)
-//                    {
-//                        linkedList.add(str);
-//                    }
-//                    added = false;
+                    } // end compareTo 'if' 
+                    if (!addedString) {
+                        serverList.add(str);
+                    } // end !addedString 'if'
+                    addedString = false;
+                } // end while
+//            serverList.add(str); // Adds it to the end of the linked list
             }
-            setLinkedList(linkedList);
         }
-
-        /**
-         * @return the linkedList
-         */
-        public LinkedList<String> getLinkedList() {
-            return linkedList;
-        }
-
-        /**
-         * @param linkedList the linkedList to set
-         */
-        public void setLinkedList(LinkedList<String> linkedList) {
-            this.linkedList = linkedList;
-        }
-
     }
 }
 
-//import java.io.IOException;
-//import java.io.PrintStream;
-//import java.net.ServerSocket;
-//import java.net.Socket;
-//
-///**
-// *
-// * @author Cody Gildea <cbgildea@gmail.com>
-// */
-//public class MulitServer {
-//
-//    // The server socket.
-//    private static ServerSocket serverSocket = null;
-//    // The client socket.
-//    private static Socket clientSocket = null;
-//
-//    // This chat server can accept up to maxClientsCount clients' connections.
-//    private static final int maxClientsCount = 10;
-//    private static final clientThread[] threads = new clientThread[maxClientsCount];
-//
-//    public static void main(String args[]) {
-//
-//        // The default port number.
-//        int portNumber = 2222;
-//        if (args.length < 1) {
-//            System.out.println("Usage: java MultiThreadChatServerSync <portNumber>\n"
-//                    + "Now using port number=" + portNumber);
-//        } else {
-//            portNumber = Integer.valueOf(args[0]).intValue();
-//        }
-//
-//        /*
-//         * Open a server socket on the portNumber (default 2222). Note that we can
-//         * not choose a port less than 1023 if we are not privileged users (root).
-//         */
-//        try {
-//            serverSocket = new ServerSocket(portNumber);
-//        } catch (IOException e) {
-//            System.out.println(e);
-//        }
-//
-//        /*
-//         * Create a client socket for each connection and pass it to a new client
-//         * thread.
-//         */
-//        while (true) {
-//            try {
-//                clientSocket = serverSocket.accept();
-//                int i = 0;
-//                for (i = 0; i < maxClientsCount; i++) {
-//                    if (threads[i] == null) {
-//                        (threads[i] = new clientThread(clientSocket, threads)).run();
-//                        break;
-//                    }
-//                }
-//                if (i == maxClientsCount) {
-//                    PrintStream os = new PrintStream(clientSocket.getOutputStream());
-//                    os.println("Server too busy. Try later.");
-//                    os.close();
-//                    clientSocket.close();
-//                }
-//            } catch (IOException e) {
-//                System.out.println(e);
-//            }
-//        }
-//    }
-//
-//}
-
+class SearchLinkedList implements Runnable {
+    String searchString;
+    int counter = 0;
+    
+    public SearchLinkedList(String searchString) {
+        this.searchString = searchString;
+        
+        Thread t = new Thread();
+        t.start();
+    }
+    
+    public void run() {
+        // In here, iterate through the linkedlist and return how many duplicates
+        Iterator<String> listIterator = serverList.iterator();
+        while(listIterator.hasNext()) {
+            String x = listIterator.next();
+            if(searchString.equals(x)) {
+                counter++;                
+            }
+        }
+    }
+}
