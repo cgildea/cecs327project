@@ -55,6 +55,7 @@ public class MulitServer {
 }
 
 class ConnectionHandler implements Runnable {
+
     private Socket socket;
     ReentrantLock lock = new ReentrantLock();
     static LinkedList<String> serverList = new LinkedList<String>(); // Introduce the static LinkedList
@@ -82,18 +83,26 @@ class ConnectionHandler implements Runnable {
                     SpellCheck spellThread = new SpellCheck(splitted[0]);
                     spellThread.run();
 
-                    if((spellThread.getMessage().equals("Correct") || spellThread.getMessage().equals("Misspelled"))) {
+                    if ((spellThread.getMessage().equals("Correct") || spellThread.getMessage().equals("Misspelled"))) {
                         AddToLinkedList addToList = new AddToLinkedList(spellThread.getWord());
                         addToList.run();
                     }
                     oos = new ObjectOutputStream(socket.getOutputStream());
-                    oos.writeObject(splitted[0] + " Received " + spellThread.getMessage());
-                    
+                    oos.writeObject(splitted[0] + " received from ClientOne" + spellThread.getMessage());
+
                     oos.close();
                     socket.close();
 
                 } else if (splitted[1].equalsIgnoreCase("CLIENTTWO")) {
-                    System.out.println("CLIENT TWO IF");
+                    SearchLinkedList searchList = new SearchLinkedList(splitted[0]);
+                    searchList.run();
+                    
+                    oos = new ObjectOutputStream(socket.getOutputStream());
+                    oos.writeObject(splitted[0] + " received from ClientTwo, found it " + searchList.getCounter() + " times in list");
+
+                    oos.close();
+                    socket.close();                   
+                    
                 } else {
                     System.out.println("CONNECTION HANDLER ERROR");
                 }
@@ -108,11 +117,11 @@ class ConnectionHandler implements Runnable {
 
             // Technically we don't need this here.......... =]
             Iterator<String> listIterator = serverList.iterator();
-            while(listIterator.hasNext()) {
+            while (listIterator.hasNext()) {
                 String x = listIterator.next();
                 System.out.println(x + ", ");
             }
-            
+
         }
     }
 
@@ -126,15 +135,17 @@ class ConnectionHandler implements Runnable {
             Thread t = new Thread();
             t.start();
         }
-        
+
         @Override
         public void run() {
             if (!word.contains("!") && !word.contains(")") && !word.contains("&") && !word.contains("@") && !word.contains("%")) {
-                System.out.println(getWord().toUpperCase()); // NO. 
-                if(getWord().equals(getWord().toUpperCase())) // 
+                System.out.println(getWord().toUpperCase()); // NO.
+                if (getWord().equals(getWord().toUpperCase())) //
+                {
                     setMessage("Correct");
-                else
+                } else {
                     setMessage("Misspelled");
+                }
                 setWord(word.toUpperCase());
             } else {
                 setMessage("Invalid");
@@ -171,6 +182,7 @@ class ConnectionHandler implements Runnable {
     }
 
     public static class AddToLinkedList {
+
         String str;
         boolean added;
 
@@ -180,7 +192,7 @@ class ConnectionHandler implements Runnable {
             Thread t = new Thread();
             t.start();
         }
-        
+
         public void run() {
             if (getLinkedList().isEmpty()) {
                 getLinkedList().add(str);
@@ -198,43 +210,58 @@ class ConnectionHandler implements Runnable {
                 added = false;
             }
         }
-        
-         /**
+
+        /**
          * @return the linkedList
          */
         public LinkedList<String> getLinkedList() {
             return serverList;
         }
     }
-    
+
     public static void printList(LinkedList<String> list) {
         System.out.println("LIST:");
         for (int i = 0; i < list.size(); i++) {
             System.out.println(list.get(i));
         }
     }
-    
+
 }
 
 class SearchLinkedList implements Runnable {
+
     String searchString;
-    int counter = 0;
-    
+    private int counter = 0;
+
     public SearchLinkedList(String searchString) {
         this.searchString = searchString;
-        
+
         Thread t = new Thread();
         t.start();
     }
-    
+
     public void run() {
         // In here, iterate through the linkedlist and return how many duplicates
         Iterator<String> listIterator = serverList.iterator();
-        while(listIterator.hasNext()) {
+        while (listIterator.hasNext()) {
             String x = listIterator.next();
-            if(searchString.equals(x)) {
-                counter++;                
+            if (searchString.equals(x)) {
+                setCounter(getCounter() + 1);
             }
         }
+    }
+
+    /**
+     * @return the counter
+     */
+    public int getCounter() {
+        return counter;
+    }
+
+    /**
+     * @param counter the counter to set
+     */
+    public void setCounter(int counter) {
+        this.counter = counter;
     }
 }
