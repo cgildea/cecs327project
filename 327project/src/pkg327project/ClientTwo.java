@@ -51,7 +51,7 @@ public class ClientTwo {
                 for (int j = 0; j < wordLength; j++) {
                     word += allowedChars.charAt(random.nextInt(allowedChars.length()));
                 }
-                System.out.println("OUT OF FOR LOOP WORD: " + word);
+                word += " CLIENTTWO";
 
                 // The server will get our word, look for it in the LL, then replies
                 ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());

@@ -8,119 +8,57 @@ import java.lang.Runnable;
 import java.lang.Thread;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static pkg327project.ConnectionHandler.serverList;
 
 public class MulitServer {
 
-    private ServerSocket server1;
-    private ServerSocket server2;
-    private int port1 = 7777;
-    private int port2 = 4444;
+    private ServerSocket server;
+
+    private int port = 7777;
 
     public MulitServer() {
         try {
-            server1 = new ServerSocket(port1);
-            server2 = new ServerSocket(port2);
+            server = new ServerSocket(port);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void main(String[] args) throws ClassNotFoundException {
+    public static void main(String[] args) {
         MulitServer example = new MulitServer();
         example.handleConnection();
     }
 
-    public void handleConnection() throws ClassNotFoundException {
+    public void handleConnection() {
         System.out.println("Waiting for client message...");
 
         //
         // The server do a loop here to accept all connection initiated by the
         // client application.
         //
-        
-        
-        
         while (true) {
             try {
-   //                Socket socket = server.accept();
-   //
-   //                new TestConnection(socket);
-                if(port1 == 7777) {
-                   System.out.println("Port is 7777");
+                Socket socket = server.accept();
 
-                   Socket socket = server1.accept();
-                   new ConnectionHandler(socket);
-   //
-   //                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-   //                String input = (String) ois.readObject();
-   //                System.out.println(input+"##################");
-                }
+                new ConnectionHandler(socket);
 
             } catch (IOException e) {
                 e.printStackTrace();
-            }   
-
-            try {
-                if (port2 == 4444) {
-                    System.out.println("Port is NOT 7777");
-
-                    Socket socket = server2.accept();                
-    //                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-    //                String input = (String) ois.readObject();
-    //                System.out.println(input+"##################");
-                    new ConnectionHandler(socket);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }            
+            }
         }
     }
-
-
-    public static class TestConnection implements Runnable {
-        Socket socket;
-        ReentrantLock lock = new ReentrantLock();
-        
-        public TestConnection(Socket socket) {
-            this.socket = socket;
-            
-            Thread t = new Thread(this);
-            t.start();
-        }
-        
-        @Override
-        public void run() {
-            lock.lock();
-            try(ObjectInputStream ois = new ObjectInputStream(socket.getInputStream())) {
-//                ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-                String input = (String) ois.readObject();
-                System.out.println(input+"##################");
-//                ConnectionHandler connectionHandler = new ConnectionHandler(socket);
-//                connectionHandler.startHandler();
-
-                ois.close();
-                socket.close();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            } finally {
-                lock.unlock();
-            }            
-        }
-    }
-
-
 }
-
 
 class ConnectionHandler implements Runnable {
 
     private Socket socket;
     ReentrantLock lock = new ReentrantLock();
-    LinkedList<String> serverList = new LinkedList<String>();
+    static LinkedList<String> serverList = new LinkedList<String>(); // Introduce the static LinkedList
 
     public ConnectionHandler(Socket socket) {
         this.socket = socket;
@@ -139,58 +77,100 @@ class ConnectionHandler implements Runnable {
 
                 String message = (String) ois.readObject();
                 System.out.println("Message Received: " + message);
-                //message = SpellCheck(message);
-//                SpellCheck spell = new SpellCheck(message);
-//                System.out.println("\nMessage Spell Checked: " + spell.getMessage());
+                String[] splitted = message.split("\\s+");
 
-                SpellCheck spellThread = new SpellCheck(message);
-                spellThread.run();
+                if (splitted[1].equalsIgnoreCase("CLIENTONE")) {
+                    SpellCheck spellThread = new SpellCheck(splitted[0]);
+                    spellThread.run();
 
-                System.out.println("\nMessage Spell Checked: " + spellThread.getMessage());
-                if (spellThread.getMessage() != "0") {
-                    System.out.println("Message was null after if check");
-                    AddToLinkedList addToList = new AddToLinkedList(message, serverList);
-                    addToList.run();
-                    System.out.println(addToList.getLinkedList());
+                    if ((spellThread.getMessage().equals("Correct") || spellThread.getMessage().equals("Misspelled"))) {
+                        AddToLinkedList addToList = new AddToLinkedList(spellThread.getWord());
+                        addToList.run();
+                    }
+                    oos = new ObjectOutputStream(socket.getOutputStream());
+                    oos.writeObject(splitted[0] + " received from ClientOne" + spellThread.getMessage());
+
+                    oos.close();
+                    socket.close();
+
+                } else if (splitted[1].equalsIgnoreCase("CLIENTTWO")) {
+                    SearchLinkedList searchList = new SearchLinkedList(splitted[0]);
+                    searchList.run();
+                    
+                    oos = new ObjectOutputStream(socket.getOutputStream());
+                    oos.writeObject(splitted[0] + " received from ClientTwo, found it " + searchList.getCounter() + " times in list");
+
+                    oos.close();
+                    socket.close();                   
+                    
+                } else {
+                    System.out.println("CONNECTION HANDLER ERROR");
                 }
-
-                oos = new ObjectOutputStream(socket.getOutputStream());
-                oos.writeObject("Hi...");
+                printList(serverList);
             }
-            oos.close();
-            socket.close();
 
             System.out.println("Waiting for client message...");
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
             lock.unlock();
+
+            // Technically we don't need this here.......... =]
+            Iterator<String> listIterator = serverList.iterator();
+            while (listIterator.hasNext()) {
+                String x = listIterator.next();
+                System.out.println(x + ", ");
+            }
+
         }
     }
 
     public static class SpellCheck implements Runnable {
 
+        private String word;
         private String message;
 
-        public SpellCheck(String message) {
-            this.message = message;
+        public SpellCheck(String word) {
+            this.word = word;
             Thread t = new Thread();
             t.start();
         }
 
-        public static String spellCheck(String w) {
-            if (!w.contains("!") && !w.contains(")") && !w.contains("&") && !w.contains("@") && !w.contains("%")) {
-                return w.toUpperCase();
+        @Override
+        public void run() {
+            if (!word.contains("!") && !word.contains(")") && !word.contains("&") && !word.contains("@") && !word.contains("%")) {
+                System.out.println(getWord().toUpperCase()); // NO.
+                if (getWord().equals(getWord().toUpperCase())) //
+                {
+                    setMessage("Correct");
+                } else {
+                    setMessage("Misspelled");
+                }
+                setWord(word.toUpperCase());
             } else {
-                return null;
+                setMessage("Invalid");
             }
+        }
+
+        /**
+         * @return the word
+         */
+        public String getWord() {
+            return word;
+        }
+
+        /**
+         * @param word the word to set
+         */
+        public void setWord(String word) {
+            this.word = word;
         }
 
         /**
          * @return the message
          */
         public String getMessage() {
-            return spellCheck(message);
+            return message;
         }
 
         /**
@@ -199,68 +179,89 @@ class ConnectionHandler implements Runnable {
         public void setMessage(String message) {
             this.message = message;
         }
-
-        @Override
-        public void run() {
-            if (!message.contains("!") && !message.contains(")") && !message.contains("&") && !message.contains("@") && !message.contains("%")) {
-                System.out.println(message.toUpperCase());
-                setMessage(message);
-            } else {
-                System.out.println("Nada");
-                setMessage("0");
-            }
-
-        }
-
     }
 
     public static class AddToLinkedList {
 
         String str;
-        private LinkedList<String> linkedList;
+        boolean added;
 
-        public AddToLinkedList(String str, LinkedList<String> linkedList) {
+        public AddToLinkedList(String str) {
             this.str = str;
-            this.linkedList = linkedList;
 
             Thread t = new Thread();
             t.start();
         }
 
         public void run() {
-
             if (getLinkedList().isEmpty()) {
                 getLinkedList().add(str);
             } else {
                 for (int k = 0; k < getLinkedList().size(); k++) {
                     if (str.compareTo(getLinkedList().get(k)) <= 0) {
                         getLinkedList().add(k, str);
-//                            added = true;
+                        added = true;
                         break;
                     }
                 }
-//                    if(!added)
-//                    {
-//                        linkedList.add(str);
-//                    }
-//                    added = false;
+                if (!added) {
+                    getLinkedList().add(str);
+                }
+                added = false;
             }
-            setLinkedList(linkedList);
         }
 
         /**
          * @return the linkedList
          */
         public LinkedList<String> getLinkedList() {
-            return linkedList;
+            return serverList;
         }
+    }
 
-        /**
-         * @param linkedList the linkedList to set
-         */
-        public void setLinkedList(LinkedList<String> linkedList) {
-            this.linkedList = linkedList;
+    public static void printList(LinkedList<String> list) {
+        System.out.println("LIST:");
+        for (int i = 0; i < list.size(); i++) {
+            System.out.println(list.get(i));
         }
+    }
 
+}
+
+class SearchLinkedList implements Runnable {
+
+    String searchString;
+    private int counter = 0;
+
+    public SearchLinkedList(String searchString) {
+        this.searchString = searchString;
+
+        Thread t = new Thread();
+        t.start();
+    }
+
+    public void run() {
+        // In here, iterate through the linkedlist and return how many duplicates
+        Iterator<String> listIterator = serverList.iterator();
+        while (listIterator.hasNext()) {
+            String x = listIterator.next();
+            if (searchString.equals(x)) {
+                setCounter(getCounter() + 1);
+            }
+        }
+    }
+
+    /**
+     * @return the counter
+     */
+    public int getCounter() {
+        return counter;
+    }
+
+    /**
+     * @param counter the counter to set
+     */
+    public void setCounter(int counter) {
+        this.counter = counter;
     }
 }
